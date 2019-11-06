@@ -2,7 +2,7 @@ package stl
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"strings"
@@ -17,7 +17,7 @@ func From(r io.Reader) (s Solid, err error) {
 	// Read first 6 bytes to get file type indicator.
 	indicator, err := br.Peek(6)
 	if err != nil {
-		return Solid{}, fmt.Errorf("input has no content")
+		return Solid{}, errors.New("input has no content")
 	}
 
 	// If indicator is "solid " then it is an ASCII file.  Otherwise binary.

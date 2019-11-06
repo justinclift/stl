@@ -2,7 +2,7 @@ package stl
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -53,7 +53,7 @@ func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 }
 
 func parseTriangles(input string) (triParsed Triangle, err error) {
-	sl := strings.Split(input, "\n")
+	sl := ourSplit(strings.TrimSpace(input), '\n')
 
 	// Get the normal for a triangle
 	var norm UnitVector
@@ -76,22 +76,22 @@ func parseTriangles(input string) (triParsed Triangle, err error) {
 }
 
 func extractCoordinate(s string) (Coordinate, error) {
-	sl := strings.Split(strings.TrimSpace(s), " ")
+	sl := ourSplit(strings.TrimSpace(s), ' ')
 	if len(sl) != 4 {
-		return Coordinate{}, fmt.Errorf("invalid input for coordinate: %s", strings.TrimSpace(s))
+		return Coordinate{}, errors.New("invalid input for coordinate: " + s)
 	}
 
 	x, err := strconv.ParseFloat(sl[1], 32)
 	if err != nil {
-		return Coordinate{}, fmt.Errorf("invalid input for coordinate x: %v", err)
+		return Coordinate{}, err
 	}
 	y, err := strconv.ParseFloat(sl[2], 32)
 	if err != nil {
-		return Coordinate{}, fmt.Errorf("invalid input for coordinate y: %v", err)
+		return Coordinate{}, err
 	}
 	z, err := strconv.ParseFloat(sl[3], 32)
 	if err != nil {
-		return Coordinate{}, fmt.Errorf("invalid input for coordinate z: %v", err)
+		return Coordinate{}, err
 	}
 
 	return Coordinate{
@@ -102,22 +102,22 @@ func extractCoordinate(s string) (Coordinate, error) {
 }
 
 func extractUnitVector(s string) (UnitVector, error) {
-	sl := strings.Split(strings.TrimSpace(s), " ")
+	sl := ourSplit(strings.TrimSpace(s), ' ')
 	if len(sl) != 5 {
-		return UnitVector{}, fmt.Errorf("invalid input for unit vector: %s", strings.TrimSpace(s))
+		return UnitVector{}, errors.New("invalid input for unit vector: " + s)
 	}
 
 	i, err := strconv.ParseFloat(sl[2], 32)
 	if err != nil {
-		return UnitVector{}, fmt.Errorf("invalid input for unit vector i: %v", err)
+		return UnitVector{}, err
 	}
 	j, err := strconv.ParseFloat(sl[3], 32)
 	if err != nil {
-		return UnitVector{}, fmt.Errorf("invalid input for unit vector j: %v", err)
+		return UnitVector{}, err
 	}
 	k, err := strconv.ParseFloat(sl[4], 32)
 	if err != nil {
-		return UnitVector{}, fmt.Errorf("invalid input for unit vector k: %v", err)
+		return UnitVector{}, err
 	}
 
 	return UnitVector{
@@ -125,4 +125,23 @@ func extractUnitVector(s string) (UnitVector, error) {
 		Nj: float32(j),
 		Nk: float32(k),
 	}, nil
+}
+
+// Quick and dirty initial attempt at replacement split function (written at ~3:30am!), to avoid using strings.Split()
+// which is currently triggering a TinyGo bug: https://github.com/tinygo-org/tinygo/issues/699
+func ourSplit(input string, sep rune) (val []string) {
+	var s string
+	for _, j := range input {
+		if j != sep {
+			// Not the separator character
+			s += string(j)
+		} else {
+			// Separator character found.  If the current string has contents, add it to the string list
+			if len(s) != 0 {
+				val = append(val, s)
+				s = ""
+			}
+		}
+	}
+	return
 }

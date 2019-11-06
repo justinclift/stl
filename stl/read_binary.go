@@ -3,7 +3,7 @@ package stl
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
+	"errors"
 	"math"
 	"strings"
 )
@@ -34,7 +34,7 @@ func extractBinaryHeader(br *bufio.Reader) (string, error) {
 	hBytes := make([]byte, 80)
 	_, err := br.Read(hBytes)
 	if err != nil {
-		return "", fmt.Errorf("could not read header: %v", err)
+		return "", errors.New("could not read header: " + err.Error())
 	}
 
 	return strings.TrimSpace(string(hBytes)), nil
@@ -44,7 +44,7 @@ func extractBinaryTriangleCount(br *bufio.Reader) (uint32, error) {
 	cntBytes := make([]byte, 4)
 	_, err := br.Read(cntBytes)
 	if err != nil {
-		return 0, fmt.Errorf("could not read triangle count: %v", err)
+		return 0, errors.New("could not read triangle count: " + err.Error())
 	}
 
 	return binary.LittleEndian.Uint32(cntBytes), nil
