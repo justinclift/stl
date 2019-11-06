@@ -36,26 +36,21 @@ func extractASCIIHeader(br *bufio.Reader) (string, error) {
 
 // Parsing is done concurrently here depending on concurrencyLevel in stl.go.
 func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
-	// Read in ASCII data.  Put on work chan raw.
-	raw, errChan := sendASCIIToWorkers(br)
+	// Create Scanner with split func for ASCII triangles
+	scanner := bufio.NewScanner(br)
+	scanner.Split(splitTrianglesASCII)
 
-	// Start up workers
-	triParsed := make(chan Triangle)
-	wg := &sync.WaitGroup{}
-	for i := 0; i < concurrencyLevel; i++ {
-		wg.Add(1)
-		go parseTriangles(raw, triParsed, errChan, wg)
+	// Parse the triangles
+	tris := make([]Triangle, 0, 1024)
+	var triParsed Triangle
+	for scanner.Scan() {
+		triParsed, err = parseTrianglesSingleThreaded(scanner.Text())
+		if err != nil {
+			return
+		}
+		tris = append(tris, triParsed)
 	}
-
-	// When workers are done, close chans
-	go func() {
-		wg.Wait()
-		close(triParsed)
-		close(errChan)
-	}()
-
-	// Accumulate parsed Triangles until triParsed channel is closed
-	return collectASCIITriangles(triParsed, errChan)
+	return tris, nil
 }
 func sendASCIIToWorkers(br *bufio.Reader) (chan string, chan error) {
 	work := make(chan string)
@@ -82,6 +77,28 @@ func sendASCIIToWorkers(br *bufio.Reader) (chan string, chan error) {
 	}()
 
 	return work, errChan
+}
+func parseTrianglesSingleThreaded(input string) (triParsed Triangle, err error) {
+	sl := strings.Split(input, "\n")
+
+	// Get the normal for a triangle
+	var norm UnitVector
+	norm, err = extractUnitVector(sl[0])
+	if err != nil {
+		return
+	}
+
+	// Get coordinates
+	var v [3]Coordinate
+	for i := 0; i < 3; i++ {
+		v[i], err = extractCoordinate(sl[i+2])
+		if err != nil {
+			return
+		}
+	}
+	triParsed.Normal = norm
+	triParsed.Vertices = v
+	return
 }
 func parseTriangles(raw <-chan string, triParsed chan<- Triangle, errChan chan error, wg *sync.WaitGroup) {
 	defer wg.Done()

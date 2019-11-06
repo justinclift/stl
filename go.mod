@@ -1,3 +1,3 @@
-module gitlab.com/russoj88/stl
+module gitlab.com/justinclift/stl
 
 go 1.12
