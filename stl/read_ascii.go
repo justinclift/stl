@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func fromASCII(br *bufio.Reader) (Solid, error) {
@@ -44,7 +43,7 @@ func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 	tris := make([]Triangle, 0, 1024)
 	var triParsed Triangle
 	for scanner.Scan() {
-		triParsed, err = parseTrianglesSingleThreaded(scanner.Text())
+		triParsed, err = parseTriangles(scanner.Text())
 		if err != nil {
 			return
 		}
@@ -52,33 +51,7 @@ func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 	}
 	return tris, nil
 }
-func sendASCIIToWorkers(br *bufio.Reader) (chan string, chan error) {
-	work := make(chan string)
-	// errChan needs a space to put error and return
-	errChan := make(chan error, concurrencyLevel+1)
-
-	go func() {
-		defer close(work)
-
-		// Create Scanner with split func for ASCII triangles
-		scanner := bufio.NewScanner(br)
-		scanner.Split(splitTrianglesASCII)
-
-		// Need to copy each read from the Scanner because it will be overwritten by the next Scan
-		for scanner.Scan() {
-			bin := make([]byte, len(scanner.Text()))
-			copy(bin, scanner.Text())
-			work <- string(bin)
-		}
-
-		if scanner.Err() != nil {
-			errChan <- fmt.Errorf("error reading input: %v", scanner.Err())
-		}
-	}()
-
-	return work, errChan
-}
-func parseTrianglesSingleThreaded(input string) (triParsed Triangle, err error) {
+func parseTriangles(input string) (triParsed Triangle, err error) {
 	sl := strings.Split(input, "\n")
 
 	// Get the normal for a triangle
@@ -99,35 +72,6 @@ func parseTrianglesSingleThreaded(input string) (triParsed Triangle, err error) 
 	triParsed.Normal = norm
 	triParsed.Vertices = v
 	return
-}
-func parseTriangles(raw <-chan string, triParsed chan<- Triangle, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	for r := range raw {
-		sl := strings.Split(r, "\n")
-
-		// Get the normal for a triangle
-		norm, err := extractUnitVector(sl[0])
-		if err != nil {
-			errChan <- err
-			return
-		}
-
-		// Get coordinates
-		var v [3]Coordinate
-		for i := 0; i < 3; i++ {
-			v[i], err = extractCoordinate(sl[i+2])
-			if err != nil {
-				errChan <- err
-				return
-			}
-		}
-
-		triParsed <- Triangle{
-			Normal:   norm,
-			Vertices: v,
-		}
-	}
 }
 func extractCoordinate(s string) (Coordinate, error) {
 	sl := strings.Split(strings.TrimSpace(s), " ")
@@ -178,18 +122,4 @@ func extractUnitVector(s string) (UnitVector, error) {
 		Nj: float32(j),
 		Nk: float32(k),
 	}, nil
-}
-func collectASCIITriangles(triParsed <-chan Triangle, errChan chan error) ([]Triangle, error) {
-	// Creating space for 1K triangles as even simple designs have a few hundred
-	tris := make([]Triangle, 0, 1024)
-	for t := range triParsed {
-		tris = append(tris, t)
-	}
-
-	err := <-errChan
-	if err != nil {
-		return nil, err
-	}
-
-	return tris, nil
 }
