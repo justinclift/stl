@@ -131,17 +131,25 @@ func extractUnitVector(s string) (UnitVector, error) {
 // which is currently triggering a TinyGo bug: https://github.com/tinygo-org/tinygo/issues/699
 func ourSplit(input string, sep rune) (val []string) {
 	var s string
+	var endAdded bool
 	for _, j := range input {
 		if j != sep {
 			// Not the separator character
-			s += string(j)
+			if j != ' ' || len(s) != 0 { // Only add a space character if it's not at the start
+				s += string(j)
+				endAdded = false
+			}
 		} else {
 			// Separator character found.  If the current string has contents, add it to the string list
 			if len(s) != 0 {
 				val = append(val, s)
 				s = ""
+				endAdded = true
 			}
 		}
+	}
+	if !endAdded {
+		val = append(val, s)
 	}
 	return
 }
