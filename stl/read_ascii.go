@@ -24,6 +24,7 @@ func fromASCII(br *bufio.Reader) (Solid, error) {
 		Triangles:     tris,
 	}, nil
 }
+
 func extractASCIIHeader(br *bufio.Reader) (string, error) {
 	s, err := br.ReadString('\n')
 	if err != nil {
@@ -33,7 +34,6 @@ func extractASCIIHeader(br *bufio.Reader) (string, error) {
 	return strings.TrimSpace(strings.TrimPrefix(string(s), "solid")), nil
 }
 
-// Parsing is done concurrently here depending on concurrencyLevel in stl.go.
 func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 	// Create Scanner with split func for ASCII triangles
 	scanner := bufio.NewScanner(br)
@@ -51,6 +51,7 @@ func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 	}
 	return tris, nil
 }
+
 func parseTriangles(input string) (triParsed Triangle, err error) {
 	sl := strings.Split(input, "\n")
 
@@ -73,6 +74,7 @@ func parseTriangles(input string) (triParsed Triangle, err error) {
 	triParsed.Vertices = v
 	return
 }
+
 func extractCoordinate(s string) (Coordinate, error) {
 	sl := strings.Split(strings.TrimSpace(s), " ")
 	if len(sl) != 4 {
@@ -98,6 +100,7 @@ func extractCoordinate(s string) (Coordinate, error) {
 		Z: float32(z),
 	}, nil
 }
+
 func extractUnitVector(s string) (UnitVector, error) {
 	sl := strings.Split(strings.TrimSpace(s), " ")
 	if len(sl) != 5 {

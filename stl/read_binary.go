@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"sync"
 )
 
 func fromBinary(br *bufio.Reader) (Solid, error) {
@@ -30,6 +29,7 @@ func fromBinary(br *bufio.Reader) (Solid, error) {
 		Triangles:     tris,
 	}, nil
 }
+
 func extractBinaryHeader(br *bufio.Reader) (string, error) {
 	hBytes := make([]byte, 80)
 	_, err := br.Read(hBytes)
@@ -39,6 +39,7 @@ func extractBinaryHeader(br *bufio.Reader) (string, error) {
 
 	return strings.TrimSpace(string(hBytes)), nil
 }
+
 func extractBinaryTriangleCount(br *bufio.Reader) (uint32, error) {
 	cntBytes := make([]byte, 4)
 	_, err := br.Read(cntBytes)
@@ -50,79 +51,34 @@ func extractBinaryTriangleCount(br *bufio.Reader) (uint32, error) {
 }
 
 // Each triangle is 50 bytes.
-// Parsing is done concurrently here depending on concurrencyLevel in stl.go.
-func extractBinaryTriangles(triCount uint32, br *bufio.Reader) ([]Triangle, error) {
-	// Read in binary and send chunks to workers
-	raw, errChan := sendBinaryToWorkers(br)
+func extractBinaryTriangles(triCount uint32, br *bufio.Reader) (tris []Triangle, err error) {
+	// Create Scanner with split func for binary triangles
+	scanner := bufio.NewScanner(br)
+	scanner.Split(splitTrianglesBinary)
 
-	// Start up workers
-	triParsed := make(chan []Triangle)
-	workGroup := sync.WaitGroup{}
-	for i := 0; i < concurrencyLevel; i++ {
-		workGroup.Add(1)
-		go parseChunksOfBinary(raw, triParsed, &workGroup)
-	}
-
-	// When workers are done, close chans
-	go func() {
-		workGroup.Wait()
-		close(triParsed)
-		close(errChan)
-	}()
-
-	// Accumulate parsed Triangles until triParsed channel is closed
-	return collectBinaryTriangles(triCount, triParsed, errChan)
-}
-func sendBinaryToWorkers(br *bufio.Reader) (chan []byte, chan error) {
-	raw := make(chan []byte)
-	// errChan needs a space to put error and return
-	errChan := make(chan error, 1)
-
-	go func() {
-		defer close(raw)
-
-		// Create Scanner with split func for binary triangle chunks
-		scanner := bufio.NewScanner(br)
-		scanner.Split(splitTrianglesBinary)
-
-		// Need to copy each read from the Scanner because it will be overwritten by the next Scan
-		for scanner.Scan() {
-			bin := make([]byte, len(scanner.Bytes()))
-			copy(bin, scanner.Bytes())
-			raw <- bin
+	// Parse the triangles
+	var t []Triangle
+	for scanner.Scan() {
+		t, err = parseChunksOfBinary(scanner.Bytes())
+		if err != nil {
+			return
 		}
-
-		if scanner.Err() != nil {
-			errChan <- fmt.Errorf("error reading input: %v", scanner.Err())
+		for _, j := range t {
+			tris = append(tris, j)
 		}
-	}()
-
-	return raw, errChan
-}
-func parseChunksOfBinary(raw <-chan []byte, triParsed chan<- []Triangle, workGroup *sync.WaitGroup) {
-	defer workGroup.Done()
-
-	for r := range raw {
-		t := make([]Triangle, 0, len(r)/50)
-		for i := 0; i < len(r); i += 50 {
-			t = append(t, triangleFromBinary(r[i:i+50]))
-		}
-		triParsed <- t
 	}
+	return
 }
-func collectBinaryTriangles(triCount uint32, triParsed <-chan []Triangle, errChan <-chan error) ([]Triangle, error) {
-	tris := make([]Triangle, 0, triCount)
-	for t := range triParsed {
-		tris = append(tris, t...)
+
+func parseChunksOfBinary(raw []byte) (triParsed []Triangle, err error) {
+	t := make([]Triangle, 0, len(raw)/50)
+	for i := 0; i < len(raw); i += 50 {
+		t = append(t, triangleFromBinary(raw[i:i+50]))
 	}
 
-	err := <-errChan
-	if err != nil {
-		return nil, err
-	}
-
-	return tris, nil
+	return t, err
 }
+
 func triangleFromBinary(bin []byte) Triangle {
 	return Triangle{
 		Normal: unitVectorFromBinary(bin[0:12]),
@@ -134,6 +90,7 @@ func triangleFromBinary(bin []byte) Triangle {
 		AttrByteCnt: uint16(bin[48])<<8 | uint16(bin[49]),
 	}
 }
+
 func coordinateFromBinary(bin []byte) Coordinate {
 	return Coordinate{
 		X: math.Float32frombits(binary.LittleEndian.Uint32(bin[0:4])),
@@ -141,6 +98,7 @@ func coordinateFromBinary(bin []byte) Coordinate {
 		Z: math.Float32frombits(binary.LittleEndian.Uint32(bin[8:12])),
 	}
 }
+
 func unitVectorFromBinary(bin []byte) UnitVector {
 	return UnitVector{
 		Ni: math.Float32frombits(binary.LittleEndian.Uint32(bin[0:4])),

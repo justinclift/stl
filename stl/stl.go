@@ -1,12 +1,5 @@
 package stl
 
-import (
-	"runtime"
-)
-
-// Number of worker goroutines
-var concurrencyLevel = runtime.NumCPU()
-
 // Coordinate is the X, Y, and Z of a Triangle Vertex
 type Coordinate struct {
 	X float32

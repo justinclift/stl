@@ -30,6 +30,7 @@ func splitTrianglesASCII(data []byte, atEOF bool) (advance int, token []byte, er
 	// Made it to the end of a token
 	return advance + 1, data[:advance], nil
 }
+
 func splitTrianglesBinary(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	const chunkSize = 50000
 
