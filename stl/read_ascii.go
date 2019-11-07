@@ -49,6 +49,9 @@ func extractASCIITriangles(br *bufio.Reader) (t []Triangle, err error) {
 		}
 		tris = append(tris, triParsed)
 	}
+	if err = scanner.Err(); err != nil {
+		return
+	}
 	return tris, nil
 }
 

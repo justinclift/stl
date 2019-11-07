@@ -67,6 +67,9 @@ func extractBinaryTriangles(triCount uint32, br *bufio.Reader) (tris []Triangle,
 			tris = append(tris, j)
 		}
 	}
+	if err = scanner.Err(); err != nil {
+		return
+	}
 	return
 }
 
