@@ -1,10 +1,11 @@
 package stl_test
 
 import (
-	"fmt"
-	"gitlab.com/russoj88/stl/stl"
 	"runtime"
+	"strconv"
 	"testing"
+
+	"gitlab.com/justinclift/stl/stl"
 )
 
 func BenchmarkFrom(b *testing.B) {
@@ -13,7 +14,7 @@ func BenchmarkFrom(b *testing.B) {
 		// The number of cores (x2 for hyper-threading) seem to get the best performance
 		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 32, 40, 48, 56, 64,
 	} {
-		b.Run(fmt.Sprintf("cl=%02d", testLevel), func(b *testing.B) {
+		b.Run("cl="+strconv.Itoa(testLevel), func(b *testing.B) {
 			runtime.GOMAXPROCS(testLevel)
 			for i := 0; i < b.N; i++ {
 				// Read into blank identifier as the actual output does not matter

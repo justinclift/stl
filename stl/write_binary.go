@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"fmt"
+	"errors"
 	"io"
 	"math"
 	"os"
@@ -17,16 +17,16 @@ func (s *Solid) ToBinary(w io.Writer) error {
 	defer bw.Flush()
 
 	if _, err := bw.Write(headerBinary(s.Header)); err != nil {
-		return fmt.Errorf("did not write header: %v", err)
+		return errors.New("did not write header: " + err.Error())
 	}
 
 	if _, err := bw.Write(triCountBinary(s.TriangleCount)); err != nil {
-		return fmt.Errorf("did not write triangle count: %v", err)
+		return errors.New("did not write triangle count: " + err.Error())
 	}
 
 	for _, t := range s.Triangles {
 		if _, err := bw.Write(triangleBinary(t)); err != nil {
-			return fmt.Errorf("did not write triangle: %v", err)
+			return errors.New("did not write triangle: " + err.Error())
 		}
 	}
 

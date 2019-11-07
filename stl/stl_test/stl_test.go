@@ -2,11 +2,12 @@ package stl
 
 import (
 	"bytes"
-	"gitlab.com/russoj88/stl/stl"
 	"io"
 	"os"
 	"sort"
 	"testing"
+
+	"gitlab.com/justinclift/stl/stl"
 )
 
 func TestFromFile(t *testing.T) {

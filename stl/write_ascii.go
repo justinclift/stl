@@ -2,10 +2,11 @@ package stl
 
 import (
 	"bufio"
-	"fmt"
+	"errors"
 	"io"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -16,18 +17,18 @@ func (s *Solid) ToASCII(w io.Writer) error {
 
 	_, err := bw.WriteString("solid " + s.Header + "\n")
 	if err != nil {
-		return fmt.Errorf("did not write header: %v", err)
+		return errors.New("did not write header: " + err.Error())
 	}
 
 	for _, t := range s.Triangles {
 		if _, err := bw.WriteString(triangleASCII(t)); err != nil {
-			return fmt.Errorf("did not write triangle: %v", err)
+			return errors.New("did not write triangle: " + err.Error())
 		}
 	}
 
 	_, err = bw.WriteString("endsolid " + s.Header + "\n")
 	if err != nil {
-		return fmt.Errorf("did not write footer: %v", err)
+		return errors.New("did not write footer: " + err.Error())
 	}
 
 	return nil
@@ -45,21 +46,22 @@ func (s *Solid) ToASCIIFile(filename string) error {
 	return s.ToASCII(file)
 }
 func triangleASCII(t Triangle) string {
-	return fmt.Sprintf(" facet normal %s %s %s\n", shortFloat(t.Normal.Ni), shortFloat(t.Normal.Nj), shortFloat(t.Normal.Nk)) +
-		"  outer loop\n" +
-		fmt.Sprintf("   vertex %s %s %s\n", shortFloat(t.Vertices[0].X), shortFloat(t.Vertices[0].Y), shortFloat(t.Vertices[0].Z)) +
-		fmt.Sprintf("   vertex %s %s %s\n", shortFloat(t.Vertices[1].X), shortFloat(t.Vertices[1].Y), shortFloat(t.Vertices[1].Z)) +
-		fmt.Sprintf("   vertex %s %s %s\n", shortFloat(t.Vertices[2].X), shortFloat(t.Vertices[2].Y), shortFloat(t.Vertices[2].Z)) +
-		"  endloop\n" +
-		" endfacet\n"
+	s := " facet normal " + shortFloat(t.Normal.Ni) + " " + shortFloat(t.Normal.Nj) + " " + shortFloat(t.Normal.Nk) + "\n"
+	s += "  outer loop\n"
+	s += "   vertex " + shortFloat(t.Vertices[0].X) + " " + shortFloat(t.Vertices[0].Y) + " " + shortFloat(t.Vertices[0].Z) + "\n"
+	s += "   vertex " + shortFloat(t.Vertices[1].X) + " " + shortFloat(t.Vertices[1].Y) + " " + shortFloat(t.Vertices[1].Z) + "\n"
+	s += "   vertex " + shortFloat(t.Vertices[2].X) + " " + shortFloat(t.Vertices[2].Y) + " " + shortFloat(t.Vertices[2].Z) + "\n"
+	s += "  endloop\n"
+	s += " endfacet\n"
+	return s
 }
 func shortFloat(f float32) string {
 	// Scientific notation
-	sn := fmt.Sprintf("%g", f)
+	sn := strconv.FormatFloat(float64(f), 'g', -1, 32)
 
 	// If f is an integer, and its shorter than scientific notation form, return an integer
 	if float64(f) == math.Floor(float64(f)) {
-		in := fmt.Sprintf("%d", int64(f))
+		in := strconv.FormatFloat(float64(f), 'f', 0, 64)
 		if len(sn) > len(in) {
 			return in
 		}

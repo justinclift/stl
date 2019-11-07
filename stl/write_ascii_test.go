@@ -1,7 +1,7 @@
 package stl
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -44,7 +44,7 @@ func Test_shortFloat(t *testing.T) {
 		},
 	} {
 		tst := tst
-		t.Run(fmt.Sprintf("shortFloat - %f", tst.in), func(t *testing.T) {
+		t.Run("shortFloat - "+strconv.FormatFloat(float64(tst.in), 'f', 0, 64), func(t *testing.T) {
 			t.Parallel()
 			got := shortFloat(tst.in)
 			if got != tst.expected {

@@ -2,7 +2,7 @@ package stl
 
 import (
 	"bytes"
-	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -53,7 +53,7 @@ func Test_triCountBinary(t *testing.T) {
 		},
 	} {
 		tst := tst
-		t.Run(fmt.Sprintf("%d", tst.c), func(t *testing.T) {
+		t.Run(strconv.FormatFloat(float64(tst.c), 'f', 0, 64), func(t *testing.T) {
 			t.Parallel()
 			got := triCountBinary(tst.c)
 			if !bytes.Equal(got, tst.expected) {

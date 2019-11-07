@@ -3,7 +3,7 @@ package stl
 import (
 	"bufio"
 	"bytes"
-	"fmt"
+	"strconv"
 	"testing"
 )
 
@@ -89,7 +89,7 @@ func Test_splitTrianglesASCII(t *testing.T) {
 		},
 	} {
 		tst := tst
-		t.Run(fmt.Sprintf("splitTrianglesASCII - %q", tst.in), func(t *testing.T) {
+		t.Run("splitTrianglesASCII - "+strconv.Quote(string(tst.in)), func(t *testing.T) {
 			t.Parallel()
 			gotAdvance, gotToken, gotError := splitTrianglesASCII(tst.in, tst.eof)
 			if gotAdvance != tst.expected.advance {

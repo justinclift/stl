@@ -2,7 +2,7 @@ package stl
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"math"
 )
 
@@ -18,7 +18,7 @@ func splitTrianglesASCII(data []byte, atEOF bool) (advance int, token []byte, er
 		if idx < 0 {
 			// Invalid input
 			if atEOF && (len(data) < 8 || string(data[:8]) != "endsolid") {
-				return 0, nil, fmt.Errorf("invalid input data")
+				return 0, nil, errors.New("invalid input data")
 			}
 
 			// Request more data
@@ -41,7 +41,7 @@ func splitTrianglesBinary(data []byte, atEOF bool) (advance int, token []byte, e
 
 	// Invalid data
 	if atEOF && math.Mod(float64(len(data)), 50) != 0 {
-		return 0, nil, fmt.Errorf("invalid input data")
+		return 0, nil, errors.New("invalid input data")
 	}
 
 	// Last chunk of data
