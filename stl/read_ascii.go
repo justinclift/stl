@@ -78,20 +78,20 @@ func parseTriangles(input string) (triParsed Triangle, err error) {
 func extractCoordinate(s string) (Coordinate, error) {
 	sl := ourSplit(strings.TrimSpace(s), ' ')
 	if len(sl) != 4 {
-		return Coordinate{}, errors.New("invalid input for coordinate: " + s)
+		return Coordinate{}, errors.New("invalid input for coordinate: " + strings.TrimSpace(s))
 	}
 
 	x, err := strconv.ParseFloat(sl[1], 32)
 	if err != nil {
-		return Coordinate{}, err
+		return Coordinate{}, errors.New("invalid input for coordinate x: " + err.Error())
 	}
 	y, err := strconv.ParseFloat(sl[2], 32)
 	if err != nil {
-		return Coordinate{}, err
+		return Coordinate{}, errors.New("invalid input for coordinate y: " + err.Error())
 	}
 	z, err := strconv.ParseFloat(sl[3], 32)
 	if err != nil {
-		return Coordinate{}, err
+		return Coordinate{}, errors.New("invalid input for coordinate z: " + err.Error())
 	}
 
 	return Coordinate{
@@ -104,20 +104,20 @@ func extractCoordinate(s string) (Coordinate, error) {
 func extractUnitVector(s string) (UnitVector, error) {
 	sl := ourSplit(strings.TrimSpace(s), ' ')
 	if len(sl) != 5 {
-		return UnitVector{}, errors.New("invalid input for unit vector: " + s)
+		return UnitVector{}, errors.New("invalid input for unit vector: " + strings.TrimSpace(s))
 	}
 
 	i, err := strconv.ParseFloat(sl[2], 32)
 	if err != nil {
-		return UnitVector{}, err
+		return UnitVector{}, errors.New("invalid input for unit vector i: " + err.Error())
 	}
 	j, err := strconv.ParseFloat(sl[3], 32)
 	if err != nil {
-		return UnitVector{}, err
+		return UnitVector{}, errors.New("invalid input for unit vector j: " + err.Error())
 	}
 	k, err := strconv.ParseFloat(sl[4], 32)
 	if err != nil {
-		return UnitVector{}, err
+		return UnitVector{}, errors.New("invalid input for unit vector k: " + err.Error())
 	}
 
 	return UnitVector{
@@ -127,8 +127,8 @@ func extractUnitVector(s string) (UnitVector, error) {
 	}, nil
 }
 
-// Quick and dirty initial attempt at replacement split function (written at ~3:30am!), to avoid using strings.Split()
-// which is currently triggering a TinyGo bug: https://github.com/tinygo-org/tinygo/issues/699
+// Quick and dirty replacement split function, to avoid using strings.Split() which is currently triggering
+// a TinyGo bug: https://github.com/tinygo-org/tinygo/issues/699
 func ourSplit(input string, sep rune) (val []string) {
 	var s string
 	var endAdded bool
